@@ -2,6 +2,7 @@ import argparse
 import base64
 import json
 import logging as log
+import hashlib
 
 import requests
 from util import extract_public_key, verify_artifact_signature
@@ -51,9 +52,20 @@ def inclusion(log_index, artifact_filepath, debug=False):
     signature = base64.b64decode(body["spec"]["signature"]["content"])
     cert = base64.b64decode(body["spec"]["signature"]["publicKey"]["content"])
     public_key = extract_public_key(cert)
-    verify_artifact_signature(signature, public_key, artifact_filepath)
+    print(raw_obj)
+
+    x = verify_artifact_signature(signature, public_key, artifact_filepath)
+    print(x)
+    inclusion_proof = raw_obj.get("verification").get("inclusionProof")
+
+    index = inclusion_proof.get("logIndex")
+    root_hash = inclusion_proof.get("rootHash")
+    tree_size = inclusion_proof.get("treeSize")
+    hashes = inclusion_proof.get("hashes")
+    leaf_hash = compute_leaf_hash(body_encoded)
+    # NOTE: what is this for???
     # get_verification_proof(log_index)
-    # verify_inclusion(DefaultHasher, index, tree_size, leaf_hash, hashes, root_hash)
+    verify_inclusion(DefaultHasher, index, tree_size, leaf_hash, hashes, root_hash, True)
 
 def get_latest_checkpoint(debug=False):
     # again check this but retreiving log_index first from file
@@ -107,7 +119,6 @@ def main():
     args = parser.parse_args()
     if args.debug:
         debug = True
-        get_log_entry(475366375)
         print("enabled debug mode")
     if args.checkpoint:
         # get and print latest checkpoint from server

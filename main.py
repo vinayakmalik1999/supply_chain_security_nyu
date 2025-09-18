@@ -41,6 +41,7 @@ def get_log_entry(log_index, debug=False):
 
 def get_verification_proof(log_index, debug=False):
     # verify that log index value is sane
+
     pass
 
 def inclusion(log_index, artifact_filepath, debug=False):
@@ -52,7 +53,6 @@ def inclusion(log_index, artifact_filepath, debug=False):
     signature = base64.b64decode(body["spec"]["signature"]["content"])
     cert = base64.b64decode(body["spec"]["signature"]["publicKey"]["content"])
     public_key = extract_public_key(cert)
-    print(raw_obj)
 
     x = verify_artifact_signature(signature, public_key, artifact_filepath)
     print(x)
@@ -69,16 +69,18 @@ def inclusion(log_index, artifact_filepath, debug=False):
 
 def get_latest_checkpoint(debug=False):
     # again check this but retreiving log_index first from file
+    #Note: ask If I am retreiving the latest checkpoint or not
     log_index = get_log_index_from_bundle()
     if log_index is None:
         log.info("log_index cannot be empty")
         return
     try:
-        checkpoint = requests.get(f'https://rekor.sigstore.dev/api/v1/log?logIndex={log_index}').json()
+        checkpoint = requests.get(f'https://rekor.sigstore.dev/api/v1/log').json()
         # store output in checkpoint.json
-        with open(checkpoint_file_path, 'w') as file:
-            # NOTE: maybe no need to json convert look later
-            json.dump(checkpoint,file)
+        if debug:
+            with open(checkpoint_file_path, 'w') as file:
+                # NOTE: maybe no need to json convert look later
+                json.dump(checkpoint,file)
 
         return checkpoint
 
@@ -88,8 +90,27 @@ def get_latest_checkpoint(debug=False):
 
 def consistency(prev_checkpoint, debug=False):
     # verify that prev checkpoint is not empty
-    # get_latest_checkpoint()
-    pass
+    latest_checkpoint = get_latest_checkpoint()
+
+    old_tree_size = prev_checkpoint["treeSize"]
+    old_root = prev_checkpoint["rootHash"]
+    old_tree_id = prev_checkpoint["treeID"]
+    new_tree_size = latest_checkpoint["treeSize"]
+    new_root = latest_checkpoint["rootHash"]
+
+    try:
+        proof = requests.get(f'https://rekor.sigstore.dev/api/v1/log/proof?firstSize={old_tree_size}&lastSize={new_tree_size}&treeID={old_tree_id}').json()
+        print(proof)
+        proof_hashes = [h for h in proof.get("hashes", [])]
+    except requests.exceptions.RequestException as ex:
+        log.error('error:', ex)
+        return
+    try:
+        verify_consistency(DefaultHasher, old_tree_size, new_tree_size, proof_hashes, old_root, new_root)
+        print("Consistency verification successful.")
+    except Exception as e:
+        print("Consistency verification failed:", str(e))
+
 
 def main():
     debug = False

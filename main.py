@@ -53,9 +53,13 @@ def inclusion(log_index, artifact_filepath, debug=False):
     signature = base64.b64decode(body["spec"]["signature"]["content"])
     cert = base64.b64decode(body["spec"]["signature"]["publicKey"]["content"])
     public_key = extract_public_key(cert)
+    try:
+        verify_artifact_signature(signature, public_key, artifact_filepath)
+        print("Signature is valid.")
+    except Exception as e:
+        print("Signature is not valid", str(e))
 
-    x = verify_artifact_signature(signature, public_key, artifact_filepath)
-    print(x)
+
     inclusion_proof = raw_obj.get("verification").get("inclusionProof")
 
     index = inclusion_proof.get("logIndex")
@@ -63,23 +67,25 @@ def inclusion(log_index, artifact_filepath, debug=False):
     tree_size = inclusion_proof.get("treeSize")
     hashes = inclusion_proof.get("hashes")
     leaf_hash = compute_leaf_hash(body_encoded)
-    # NOTE: what is this for???
-    # get_verification_proof(log_index)
-    verify_inclusion(DefaultHasher, index, tree_size, leaf_hash, hashes, root_hash, True)
+
+    try:
+        verify_inclusion(DefaultHasher, index, tree_size, leaf_hash, hashes, root_hash, debug)
+        print("Offline root hash calculation for inclusion verified.")
+    except Exception as e:
+        print("Offline root hash calculation for inclusion failed.", str(e))
+
 
 def get_latest_checkpoint(debug=False):
-    # again check this but retreiving log_index first from file
-    #Note: ask If I am retreiving the latest checkpoint or not
+    # retreiving log_index first from file
     log_index = get_log_index_from_bundle()
     if log_index is None:
         log.info("log_index cannot be empty")
         return
     try:
         checkpoint = requests.get(f'https://rekor.sigstore.dev/api/v1/log').json()
-        # store output in checkpoint.json
+        # store output in checkpoint.json if debug is on
         if debug:
             with open(checkpoint_file_path, 'w') as file:
-                # NOTE: maybe no need to json convert look later
                 json.dump(checkpoint,file)
 
         return checkpoint
@@ -100,7 +106,6 @@ def consistency(prev_checkpoint, debug=False):
 
     try:
         proof = requests.get(f'https://rekor.sigstore.dev/api/v1/log/proof?firstSize={old_tree_size}&lastSize={new_tree_size}&treeID={old_tree_id}').json()
-        print(proof)
         proof_hashes = [h for h in proof.get("hashes", [])]
     except requests.exceptions.RequestException as ex:
         log.error('error:', ex)

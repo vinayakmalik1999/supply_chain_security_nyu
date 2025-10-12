@@ -19,7 +19,7 @@ def get_log_index_from_bundle():
     with open(bundle_file_path, 'r') as file:
         dump = json.load(file)
         try:
-            log_index = dump.get('rekorBundle').get('Payload').get('logIndex')
+            log_index = dump['rekorBundle']['Payload']['logIndex']
             return log_index
         except KeyError as e:
             log.error(e)
@@ -39,11 +39,6 @@ def get_log_entry(log_index, debug=False):
         log.error('upstream response error from sigstore:',ex)
         return None
 
-def get_verification_proof(log_index, debug=False):
-    # verify that log index value is sane
-
-    pass
-
 def inclusion(log_index, artifact_filepath, debug=False):
     # verify that log index and artifact filepath values are sane
     log_entry = get_log_entry(log_index,debug)
@@ -60,7 +55,7 @@ def inclusion(log_index, artifact_filepath, debug=False):
         print("Signature is not valid", str(e))
 
 
-    inclusion_proof = raw_obj.get("verification").get("inclusionProof")
+    inclusion_proof = raw_obj["verification"]["inclusionProof"]
 
     index = inclusion_proof.get("logIndex")
     root_hash = inclusion_proof.get("rootHash")
@@ -76,11 +71,6 @@ def inclusion(log_index, artifact_filepath, debug=False):
 
 
 def get_latest_checkpoint(debug=False):
-    # retreiving log_index first from file
-    log_index = get_log_index_from_bundle()
-    if log_index is None:
-        log.info("log_index cannot be empty")
-        return
     try:
         checkpoint = requests.get(f'https://rekor.sigstore.dev/api/v1/log').json()
         # store output in checkpoint.json if debug is on

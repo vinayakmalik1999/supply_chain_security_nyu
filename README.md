@@ -12,8 +12,8 @@ Basically, it helps you confirm that your artifact was properly logged and that 
 Python: 3.9
 
 **Install**:
-* git clone <repo>
-* cd <repo>
+* git clone repo
+* cd repo
 
 Will need to install required packages with pip
 

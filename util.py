@@ -1,3 +1,10 @@
+"""
+Utility functions for handling certificates and artifact signature verification.
+
+Provides:
+- extract_public_key: Extracts PEM-encoded public key from a certificate.
+- verify_artifact_signature: Verifies an artifact's signature using the public key.
+"""
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
@@ -75,5 +82,5 @@ def verify_artifact_signature(signature, public_key, artifact_filename):
         public_key.verify(signature, data, ec.ECDSA(hashes.SHA256()))
     except InvalidSignature:
         print("Signature is invalid")
-    except Exception as e:
+    except (ValueError, TypeError) as e:
         print("Exception in verifying artifact signature:", e)

@@ -30,8 +30,8 @@ from merkle_proof import (
 # //------ NOTE: I have used Pycharm's autocomplete code function
 # in a lot of places as well as stackoverflow in the code however the logic is all mine -----//
 
-bundle_file_path = "artifact.bundle"
-checkpoint_file_path = "checkpoint.json"
+BUNDLE_FILE_PATH = "artifact.bundle"
+CHECKPOINT_FILE_PATH = "checkpoint.json"
 
 
 def get_log_index_from_bundle():
@@ -44,23 +44,21 @@ def get_log_index_from_bundle():
     Raises:
         KeyError: If 'rekorBundle' or 'Payload' keys are missing in the bundle.
     """
-    with open(bundle_file_path, "r") as file:
+    with open(BUNDLE_FILE_PATH, "r", encoding="utf-8") as file:
         dump = json.load(file)
         try:
-            log_index = dump["rekorBundle"]["Payload"]["logIndex"]
-            return log_index
+            return dump["rekorBundle"]["Payload"]["logIndex"]
         except KeyError as e:
-            log.error(e)
+            log.error("%s", e)
             return None
 
 
-def get_log_entry(log_index, debug=False):
+def get_log_entry(log_index):
     """
     Retrieve a Rekor log entry by its log index.
 
     Args:
         log_index (int): The log index of the entry.
-        debug (bool): If True, enables debug logging.
 
     Returns:
         dict | None: The log entry JSON object if found, otherwise None.
@@ -70,16 +68,14 @@ def get_log_entry(log_index, debug=False):
     """
     if log_index is None:
         log.info("log_index cannot be empty")
-        return
-    log_entry = {}
+        return None
     try:
-        log_entry = requests.get(
-            f"https://rekor.sigstore.dev/api/v1/log/entries?logIndex={log_index}"
+        return requests.get(
+            f"https://rekor.sigstore.dev/api/v1/log/entries?logIndex={log_index}",
+            timeout=10,
         ).json()
-        return log_entry
-
     except requests.exceptions.RequestException as ex:
-        log.error("upstream response error from sigstore:", ex)
+        log.error("upstream response error from sigstore: %s", ex)
         return None
 
 
@@ -98,35 +94,42 @@ def inclusion(log_index, artifact_filepath, debug=False):
         Exception: If the signature or inclusion proof verification fails.
     """
 
-    # verify that log index and artifact filepath values are sane
-    log_entry = get_log_entry(log_index, debug)
-    raw_obj = log_entry[list(log_entry.keys())[0]]
+    log_entry = get_log_entry(log_index)
+    raw_obj = next(iter(log_entry.values()))
     body_encoded = raw_obj.get("body")
+
     body = json.loads(base64.b64decode(body_encoded))
-    signature = base64.b64decode(body["spec"]["signature"]["content"])
-    cert = base64.b64decode(body["spec"]["signature"]["publicKey"]["content"])
-    public_key = extract_public_key(cert)
+    sig_spec = body["spec"]["signature"]
+    signature = base64.b64decode(sig_spec["content"])
+    cert_data = base64.b64decode(sig_spec["publicKey"]["content"])
+    public_key = extract_public_key(cert_data)
+
     try:
         verify_artifact_signature(signature, public_key, artifact_filepath)
         print("Signature is valid.")
-    except Exception as e:
-        print("Signature is not valid", str(e))
+    except ValueError as err:
+        print("Signature is not valid:", err)
 
-    inclusion_proof = raw_obj["verification"]["inclusionProof"]
+    proof_data = raw_obj["verification"]["inclusionProof"]
+    leaf_hash_hex = compute_leaf_hash(body_encoded)
 
-    index = inclusion_proof.get("logIndex")
-    root_hash = inclusion_proof.get("rootHash")
-    tree_size = inclusion_proof.get("treeSize")
-    hashes = inclusion_proof.get("hashes")
-    leaf_hash = compute_leaf_hash(body_encoded)
+    leaf_info = {
+        "index": proof_data.get("logIndex"),
+        "size": proof_data.get("treeSize"),
+        "hash": leaf_hash_hex,
+    }
 
     try:
         verify_inclusion(
-            DefaultHasher, index, tree_size, leaf_hash, hashes, root_hash, debug
+            DefaultHasher,
+            leaf_info,
+            proof_data.get("hashes", []),
+            proof_data.get("rootHash"),
+            debug,
         )
         print("Offline root hash calculation for inclusion verified.")
-    except Exception as e:
-        print("Offline root hash calculation for inclusion failed.", str(e))
+    except ValueError as err:
+        print("Offline root hash calculation for inclusion failed:", err)
 
 
 def get_latest_checkpoint(debug=False):
@@ -144,16 +147,18 @@ def get_latest_checkpoint(debug=False):
     """
 
     try:
-        checkpoint = requests.get("https://rekor.sigstore.dev/api/v1/log").json()
+        checkpoint = requests.get(
+            "https://rekor.sigstore.dev/api/v1/log", timeout=10
+        ).json()
         # store output in checkpoint.json if debug is on
         if debug:
-            with open(checkpoint_file_path, "w") as file:
+            with open(CHECKPOINT_FILE_PATH, "w", encoding="utf-8") as file:
                 json.dump(checkpoint, file)
 
         return checkpoint
 
     except requests.exceptions.RequestException as ex:
-        log.error("upstream response error from sigstore:", ex)
+        log.error("Upstream response error from sigstore: %s", ex)
         return None
 
 
@@ -162,14 +167,12 @@ def consistency(prev_checkpoint, debug=False):
     Verify the consistency between a previous checkpoint and the latest one.
 
     Args:
-        prev_checkpoint (dict): A dictionary containing the previous checkpoint details
+        prev_checkpoint (dict): Dictionary containing previous checkpoint details
             with keys 'treeID', 'treeSize', and 'rootHash'.
-        debug (bool): Enables debug output if True.
 
     Raises:
         Exception: If consistency verification fails.
     """
-    # verify that prev checkpoint is not empty
     latest_checkpoint = get_latest_checkpoint()
 
     old_tree_size = prev_checkpoint["treeSize"]
@@ -180,24 +183,31 @@ def consistency(prev_checkpoint, debug=False):
 
     try:
         proof = requests.get(
-            f"https://rekor.sigstore.dev/api/v1/log/proof?firstSize={old_tree_size}&lastSize={new_tree_size}&treeID={old_tree_id}"
+            f"https://rekor.sigstore.dev/api/v1/log/proof?firstSize={old_tree_size}"
+            f"&lastSize={new_tree_size}&treeID={old_tree_id}",
+            timeout=10,
         ).json()
-        proof_hashes = [h for h in proof.get("hashes", [])]
+        proof_hashes = list(proof.get("hashes", []))
+        if debug:
+            print(f"Fetched {len(proof_hashes)} proof hashes for consistency check.")
     except requests.exceptions.RequestException as ex:
-        log.error("error:", ex)
+        log.error("Error retrieving proof: %s", ex)
         return
+
     try:
+        # Updated call to match the new signature
         verify_consistency(
             DefaultHasher,
-            old_tree_size,
-            new_tree_size,
-            proof_hashes,
-            old_root,
-            new_root,
+            sizes=(old_tree_size, new_tree_size),
+            proof=proof_hashes,
+            roots=(old_root, new_root),
         )
         print("Consistency verification successful.")
-    except Exception as e:
+    except ValueError as e:
         print("Consistency verification failed:", str(e))
+        if debug:
+            print(f"Old root: {old_root}\nNew root: {new_root}")
+
 
 
 def main():

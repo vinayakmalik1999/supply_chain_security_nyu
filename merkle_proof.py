@@ -115,7 +115,9 @@ def verify_consistency(hasher, sizes, proof, roots):
         return
     if size1 == 0:
         if bytearray_proof:
-            raise ValueError(f"expected empty proof, but got {len(bytearray_proof)} components")
+            raise ValueError(
+                f"expected empty proof, but got {len(bytearray_proof)} components"
+            )
         return
     if not bytearray_proof:
         raise ValueError("empty proof")
@@ -136,14 +138,18 @@ def verify_consistency(hasher, sizes, proof, roots):
     # compute and verify roots
     verify_match(
         chain_border_right(
-            hasher, chain_inner_right(hasher, seed, proof_slice[:inner], mask), proof_slice[inner:]
+            hasher,
+            chain_inner_right(hasher, seed, proof_slice[:inner], mask),
+            proof_slice[inner:],
         ),
         root1,
     )
 
     verify_match(
         chain_border_right(
-            hasher, chain_inner(hasher, seed, proof_slice[:inner], mask), proof_slice[inner:]
+            hasher,
+            chain_inner(hasher, seed, proof_slice[:inner], mask),
+            proof_slice[inner:],
         ),
         root2,
     )
@@ -274,8 +280,10 @@ class RootMismatchError(Exception):
         Returns:
             str: Formatted error message.
         """
-        return (f"calculated root:\n{self.calculated_root}\n"
-                f" does not match expected root:\n{self.expected_root}")
+        return (
+            f"calculated root:\n{self.calculated_root}\n"
+            f" does not match expected root:\n{self.expected_root}"
+        )
 
 
 def root_from_inclusion_proof(hasher, index, size, leaf_hash, proof):
@@ -333,7 +341,9 @@ def verify_inclusion(hasher, leaf_info, proof, root, debug=False):
     bytearray_proof = [bytes.fromhex(h) for h in proof]
     bytearray_root = bytes.fromhex(root)
 
-    calc_root = root_from_inclusion_proof(hasher, index, size, leaf_hash, bytearray_proof)
+    calc_root = root_from_inclusion_proof(
+        hasher, index, size, leaf_hash, bytearray_proof
+    )
     verify_match(calc_root, bytearray_root)
 
     if debug:

@@ -27,8 +27,6 @@ from merkle_proof import (
     compute_leaf_hash,
 )
 
-# //------ NOTE: I have used Pycharm's autocomplete code function
-# in a lot of places as well as stackoverflow in the code however the logic is all mine -----//
 
 BUNDLE_FILE_PATH = "artifact.bundle"
 CHECKPOINT_FILE_PATH = "checkpoint.json"
@@ -207,7 +205,6 @@ def consistency(prev_checkpoint, debug=False):
         print("Consistency verification failed:", str(e))
         if debug:
             print(f"Old root: {old_root}\nNew root: {new_root}")
-
 
 
 def main():

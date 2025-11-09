@@ -1,0 +1,33 @@
+[project]
+name = "supply-chain-security-nyu"
+version = "1.0.0"
+description = "Supply Chan  in Security Project Dependencies"
+authors = [
+    {name = "vinayakmalik1999"}
+]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.9"
+package-mode = "false"
+dependencies = [
+    "cryptography (==41.0.0)",
+    "requests (==2.32.5)",
+    "pre-commit (==4.3.0)"
+]
+[tool.poetry]
+package-mode = false
+
+[dependency-groups]
+dev = [
+    "mypy (>=1.18.2,<2.0.0)",
+    "ruff (>=0.14.4,<0.15.0)",
+    "pylint (==3.3.9)",
+    "bandit (>=1.8.6,<2.0.0)",
+    "black (>=25.9.0,<26.0.0)",
+    "flake8 (>=7.3.0,<8.0.0)"
+]
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+

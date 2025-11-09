@@ -166,6 +166,7 @@ This project requires two Python packages, specified in `requirements.txt`:
   - X.509 certificate parsing and handling
 
 - **`requests`** - HTTP client library
+- - **`pre-commit`** - Precommit hooks framework
 
 
 ### Installing Dependencies

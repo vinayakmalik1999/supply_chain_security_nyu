@@ -160,6 +160,35 @@ python main.py --consistency --tree-id <id> --tree-size <size> --root-hash <hash
 - `log_entry_<index>.json` - Detailed log entry information
 - Additional verification data and intermediate results
 
+## 📦 Dependencies
+
+This project requires two Python packages to run, specified in `requirements.txt`:
+
+### Core Dependencies
+
+- **`cryptography`** - Provides cryptographic primitives
+  - ECDSA signature verification
+  - X.509 certificate parsing and handling
+
+- **`requests`** - HTTP client library
+- - **`pre-commit`** - Precommit hooks framework
+
+NOTE: while there are other dependencies they are not required to run the utility
+
+### Installing Dependencies
+
+```bash
+# Install from requirements.txt
+pip install -r requirements.txt
+```
+
+### Verifying Dependencies
+
+```bash
+# Check installed versions
+pip list | grep -E "cryptography|requests"
+```
+
 ## 📚 Documentation
 
 - **[SECURITY.md](SECURITY.md)** - Security policy, threat model, and vulnerability reporting

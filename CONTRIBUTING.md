@@ -8,30 +8,6 @@ Thank you for your interest in contributing to this project! This is an educatio
 
 - Python 3.9
 - Git
-### Setting Up Development Environment
-
-1. **Clone the repository**
-```bash
-git clone <repository-url>
-cd supply_chain_security_nyu
-```
-
-2. **Create and activate virtual environment**
-```bash
-python3.9 -m venv .venv
-source .venv/bin/activate
-```
-
-3. **Install dependencies**
-```bash
-pip install -r requirements.txt
-```
-
-4. **Install Static Analysis tools**
-```bash
-pip install -r tools.txt
-```
-
 ## Development Workflow
 
 ### Before Making Changes
@@ -225,19 +201,10 @@ How the changes were tested
 
 ## Code Review Guidelines
 
-### For Contributors
-
 - Be responsive to feedback
 - Keep discussions constructive
 - Update PR based on review comments
 - Ask questions if feedback is unclear
-
-### For Reviewers
-
-- Focus on security implications
-- Check for proper error handling
-- Verify cryptographic operations are correct
-- Ensure code follows project style
 
 ## Security Contributions
 
@@ -254,7 +221,6 @@ Report security vulnerabilities privately (see SECURITY.md).
 ## Questions or Help?
 
 - Review existing documentation: `README.md`, `SECURITY.md`
-- Check the template repository: https://github.com/mayank-ramnani/python-rekor-monitor-template.git
 - Open an issue for discussion
 
 ## License

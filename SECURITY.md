@@ -103,18 +103,6 @@ Security releases will be tagged with clear version numbers and include:
 - Cryptographic verification techniques
 - Sigstore ecosystem integration
 
-**For production use**, please consider:
-- [Official Sigstore cosign](https://github.com/sigstore/cosign)
-- [sigstore-python](https://github.com/sigstore/sigstore-python)
-- [Rekor CLI](https://github.com/sigstore/rekor)
-
-## Additional Resources
-
-- [Sigstore Documentation](https://docs.sigstore.dev/)
-- [RFC 6962 - Certificate Transparency](https://tools.ietf.org/html/rfc6962)
-- [Rekor API Documentation](https://docs.sigstore.dev/rekor/overview/)
-- [OWASP Secure Coding Practices](https://owasp.org/www-project-secure-coding-practices-quick-reference-guide/)
-
 ## Security Hall of Fame
 
 We recognize and thank security researchers who responsibly disclose vulnerabilities:

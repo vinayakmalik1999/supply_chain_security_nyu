@@ -54,7 +54,12 @@ This will install:
 - `cryptography` - For signature verification and certificate handling
 - `requests` - For HTTP communication with the Rekor API
 
-### 4. Verify Installation
+### 4. Install Static Analysis tools**
+```bash
+pip install -r tools.txt
+```
+
+### 5. Verify Installation
 
 ```bash
 python3 main.py --checkpoint
@@ -155,39 +160,11 @@ python main.py --consistency --tree-id <id> --tree-size <size> --root-hash <hash
 - `log_entry_<index>.json` - Detailed log entry information
 - Additional verification data and intermediate results
 
-## 📦 Dependencies
-
-This project requires two Python packages, specified in `requirements.txt`:
-
-### Core Dependencies
-
-- **`cryptography`** - Provides cryptographic primitives
-  - ECDSA signature verification
-  - X.509 certificate parsing and handling
-
-- **`requests`** - HTTP client library
-- - **`pre-commit`** - Precommit hooks framework
-
-
-### Installing Dependencies
-
-```bash
-# Install from requirements.txt
-pip install -r requirements.txt
-```
-
-### Verifying Dependencies
-
-```bash
-# Check installed versions
-pip list | grep -E "cryptography|requests"
-```
 ## 📚 Documentation
 
 - **[SECURITY.md](SECURITY.md)** - Security policy, threat model, and vulnerability reporting
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** - Guidelines for contributing to the project
 
 ---
-
 
 *This is an educational project demonstrating transparency log verification. For production use, please use official Sigstore tools.*

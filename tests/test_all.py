@@ -1,11 +1,8 @@
-"""Test suite for Rekor Verifier Utility"""
-
 import sys
 from merkle_proof import DefaultHasher
 import json
 import base64
-import os
-from unittest.mock import patch, Mock
+from unittest.mock import patch
 import pytest
 import merkle_proof
 import util

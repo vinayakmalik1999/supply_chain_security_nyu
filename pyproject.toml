@@ -1,36 +1,33 @@
-[project]
-name = "supply-chain-security-nyu"
-version = "1.0.0"
-description = "Supply Chan  in Security Project Dependencies"
-authors = [
-    {name = "vinayakmalik1999"}
-]
-license = {text = "MIT"}
-readme = "README.md"
-requires-python = ">=3.9"
-package-mode = "false"
-dependencies = [
-    "cryptography (==41.0.0)",
-    "requests (==2.32.5)",
-    "pre-commit (==4.3.0)"
-]
 [tool.poetry]
-package-mode = false
+name = "supply-chain-security-nyu"
+version = "2.0.3"
+description = "Supply Chain Security Project Dependencies"
+authors = ["vinayakmalik1999"]
+license = "MIT"
+readme = "README.md"
+packages = [{include = "supply_chain_security_nyu"}]
 
-[dependency-groups]
-dev = [
-    "mypy (>=1.18.2,<2.0.0)",
-    "ruff (>=0.14.4,<0.15.0)",
-    "pylint (==3.3.9)",
-    "bandit (>=1.8.6,<2.0.0)",
-    "black (>=25.9.0,<26.0.0)",
-    "flake8 (>=7.3.0,<8.0.0)",
-    "pytest (==8.4.2)",
-    "pytest-cov (>=7.0.0,<8.0.0)",
-    "pytest-mock (==3.15.1)"
-]
+[tool.poetry.dependencies]
+python = "^3.9"
+cryptography = "41.0.0"
+requests = "2.32.5"
+pre-commit = "4.3.0"
+cyclonedx-bom = "^7.2.1"
+
+[tool.poetry.group.dev.dependencies]
+mypy = "^1.18.2"
+ruff = "^0.14.4"
+pylint = "3.3.9"
+bandit = "^1.8.6"
+black = "^25.9.0"
+flake8 = "^7.3.0"
+pytest = "8.4.2"
+pytest-cov = "^7.0.0"
+pytest-mock = "3.15.1"
+
+[tool.poetry.scripts]
+python-rekor-monitor = "supply_chain_security_nyu.main:main"
+
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
-
-

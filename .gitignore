@@ -38,7 +38,7 @@ tool_outputs/
 
 # Distribution / Packaging
 *.egg-info/
-dist/
+#dist/
 build/
 
 # Local development files

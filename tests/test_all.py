@@ -1,12 +1,10 @@
 import sys
-from merkle_proof import DefaultHasher
+from supply_chain_security_nyu.merkle_proof import DefaultHasher
 import json
 import base64
 from unittest.mock import patch
 import pytest
-import merkle_proof
-import util
-import main
+from supply_chain_security_nyu import util, main, merkle_proof
 
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives import hashes, serialization

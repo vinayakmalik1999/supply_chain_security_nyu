@@ -97,6 +97,29 @@ python3 main.py --inclusion <log-index> --artifact <artifact>
 - Your artifact must have been previously signed with Cosign
 - You need the log index from when it was signed
 
+## 🧰 Using the CLI via PyPI (New)
+
+If you install this tool directly from PyPI using:
+
+```pip install python-rekor-monitor```
+
+
+you can run all the existing CLI commands (the same ones exposed in main.py) using the global command:
+
+```python-rekor-monitor```
+
+
+This behaves exactly like running python3 main.py inside the repo—just more convenient.
+
+Examples:
+```
+python-rekor-monitor --checkpoint
+python-rekor-monitor --inclusion 125847350 --artifact artifact.txt
+python-rekor-monitor --consistency --tree-id <id> --tree-size <size> --root-hash <hash>
+
+```
+No need to clone the repo or reference main.py.
+
 **Example workflow:**
 
 ```bash

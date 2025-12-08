@@ -50,7 +50,7 @@ jobs:
 
       - name: Run Black formatting check
         run: |
-          poetry run black --check .
+          poetry run black --check . --exclude '\.venv/'
 
       - name: Run Flake8 linting
         run: |
@@ -106,12 +106,9 @@ jobs:
           name: bandit-report
           path: bandit-report.json
 
-      - name: Run TruffleHog secret scanning
+      - name: TruffleHog secret scanning
         uses: trufflesecurity/trufflehog@main
         with:
-          path: ./
-          base: ${{ github.event.repository.default_branch }}
-          head: HEAD
           extra_args: --only-verified --fail
 
   test:

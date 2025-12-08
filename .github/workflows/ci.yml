@@ -54,7 +54,7 @@ jobs:
 
       - name: Run Flake8 linting
         run: |
-          poetry run flake8 .
+          poetry run flake8 supply_chain_security_nyu/ tests/
 
       - name: Run Pylint linting
         run: |
@@ -106,11 +106,13 @@ jobs:
           name: bandit-report
           path: bandit-report.json
 
-      - name: TruffleHog secret scanning
+      - name: Run TruffleHog secret scanning
         uses: trufflesecurity/trufflehog@main
         with:
+          path: ./
+          base: ${{ github.event.before != '0000000000000000000000000000000000000000' && github.event.before || '' }}
+          head: HEAD
           extra_args: --only-verified --fail
-
   test:
     name: Testing and Coverage
     runs-on: ubuntu-latest

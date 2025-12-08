@@ -1,0 +1,76 @@
+name: CD Pipeline
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+jobs:
+  build-and-release:
+    name: Build, Attest, and Release
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: latest
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Install dependencies
+        run: poetry install --with dev
+
+      - name: Build project with Poetry
+        run: |
+          poetry build
+          echo "Build completed successfully"
+
+      - name: Generate SBOM with CycloneDX
+        run: |
+          poetry run cyclonedx-py poetry \
+            --format json \
+            --output-file cyclonedx-sbom.json
+          echo "SBOM generation completed"
+
+      - name: Attest SBOM for built artifacts
+        uses: actions/attest-sbom@v3
+        with:
+          subject-path: 'dist/*'
+          sbom-path: 'cyclonedx-sbom.json'
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build
+          path: dist/
+
+      - name: Upload attestation as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-attestation
+          path: cyclonedx-sbom.json
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: github.ref_type == 'tag'
+        with:
+          files: |
+            dist/*.whl
+            dist/*.tar.gz
+            cyclonedx-sbom.json
+          generate_release_notes: true
+          fail_on_unmatched_files: false

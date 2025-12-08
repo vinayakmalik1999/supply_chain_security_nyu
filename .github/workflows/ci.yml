@@ -1,0 +1,191 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  code-quality:
+    name: Code Quality Checks
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: latest
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+
+      - name: Install dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --with dev
+
+      - name: Run Ruff linting
+        run: |
+          poetry run ruff check . --output-format=github
+
+      - name: Run Ruff format check
+        run: |
+          poetry run ruff format --check .
+
+      - name: Run Black formatting check
+        run: |
+          poetry run black --check .
+
+      - name: Run Flake8 linting
+        run: |
+          poetry run flake8 .
+
+      - name: Run Pylint linting
+        run: |
+          poetry run pylint supply_chain_security_nyu/ tests/
+        continue-on-error: false
+
+  security:
+    name: Security Scanning
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: latest
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+
+      - name: Install dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --with dev
+
+      - name: Run Bandit SAST scan
+        run: |
+          poetry run bandit -r supply_chain_security_nyu/ -f json -o bandit-report.json
+          poetry run bandit -r supply_chain_security_nyu/
+
+      - name: Upload Bandit report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bandit-report
+          path: bandit-report.json
+
+      - name: Run TruffleHog secret scanning
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --only-verified --fail
+
+  test:
+    name: Testing and Coverage
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: latest
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+
+      - name: Install dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --with dev
+
+      - name: Run tests with coverage
+        run: |
+          poetry run pytest --cov=supply_chain_security_nyu --cov-report=term-missing --cov-report=xml --cov-report=html
+
+      - name: Upload coverage report (XML)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report-xml
+          path: coverage.xml
+
+      - name: Upload coverage report (HTML)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report-html
+          path: htmlcov/
+
+      - name: Coverage summary
+        run: |
+          poetry run coverage report --show-missing
+
+  summary:
+    name: Pipeline Summary
+    runs-on: ubuntu-latest
+    needs: [code-quality, security, test]
+    if: always()
+
+    steps:
+      - name: Check job results
+        run: |
+          echo "==================== Pipeline Summary ===================="
+          echo "Code Quality: ${{ needs.code-quality.result }}"
+          echo "Security Scanning: ${{ needs.security.result }}"
+          echo "Testing & Coverage: ${{ needs.test.result }}"
+          echo "=========================================================="
+          
+          if [[ "${{ needs.code-quality.result }}" != "success" ]] || \
+             [[ "${{ needs.security.result }}" != "success" ]] || \
+             [[ "${{ needs.test.result }}" != "success" ]]; then
+            echo "❌ CI Pipeline FAILED - Please check the logs above"
+            exit 1
+          fi
+          echo "✅ All checks passed successfully!"

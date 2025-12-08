@@ -1,9 +1,8 @@
 # Rekor Verifier Utility
-
-[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Sigstore](https://img.shields.io/badge/Sigstore-Rekor-purple.svg)](https://sigstore.dev)
-
+[![CI Pipeline](https://github.com/vinayakmalik1999/supply_chain_security_nyu/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/vinayakmalik1999/supply_chain_security_nyu/actions/workflows/ci.yml)
+[![CD Pipeline](https://github.com/vinayakmalik1999/supply_chain_security_nyu/actions/workflows/cd.yml/badge.svg)](https://github.com/vinayakmalik1999/supply_chain_security_nyu/actions/workflows/cd.yml)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/vinayakmalik1999/supply_chain_security_nyu/badge)](https://scorecard.dev/viewer/?uri=github.com/vinayakmalik1999/supply_chain_security_nyu)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/11583/badge)](https://www.bestpractices.dev/projects/11583)
 A Python tool for verifying artifacts and ensuring integrity using [Sigstore's Rekor](https://docs.sigstore.dev/rekor/overview/) transparency log. Built for the NYU Software Supply Chain Security class, this tool demonstrates how transparency logs work and how to cryptographically verify software artifacts.
 
 > **Note:** This tool works with artifacts that have already been signed using Sigstore Cosign. It focuses on verification rather than signing.

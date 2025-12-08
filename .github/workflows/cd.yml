@@ -42,7 +42,6 @@ jobs:
       - name: Generate SBOM with CycloneDX
         run: |
           poetry run cyclonedx-py poetry \
-            --format json \
             --output-file cyclonedx-sbom.json
           echo "SBOM generation completed"
 

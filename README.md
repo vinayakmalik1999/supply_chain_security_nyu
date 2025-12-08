@@ -3,6 +3,7 @@
 [![CD Pipeline](https://github.com/vinayakmalik1999/supply_chain_security_nyu/actions/workflows/cd.yml/badge.svg)](https://github.com/vinayakmalik1999/supply_chain_security_nyu/actions/workflows/cd.yml)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/vinayakmalik1999/supply_chain_security_nyu/badge)](https://scorecard.dev/viewer/?uri=github.com/vinayakmalik1999/supply_chain_security_nyu)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/11583/badge)](https://www.bestpractices.dev/projects/11583)
+
 A Python tool for verifying artifacts and ensuring integrity using [Sigstore's Rekor](https://docs.sigstore.dev/rekor/overview/) transparency log. Built for the NYU Software Supply Chain Security class, this tool demonstrates how transparency logs work and how to cryptographically verify software artifacts.
 
 > **Note:** This tool works with artifacts that have already been signed using Sigstore Cosign. It focuses on verification rather than signing.

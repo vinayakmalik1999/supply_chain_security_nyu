@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "supply-chain-security-nyu"
-version = "2.0.3"
+version = "3.0.0"
 description = "Supply Chain Security Project Dependencies"
 authors = ["vinayakmalik1999"]
 license = "MIT"

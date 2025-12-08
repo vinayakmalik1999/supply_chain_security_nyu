@@ -1,8 +1,9 @@
 """
 Rekor Verifier Utility
 
-This module provides functions to interact with the Sigstore Rekor transparency log
-for verifying artifact inclusion, consistency, and signatures using cryptographic proofs.
+This module provides functions to interact with the Sigstore Rekor transparency
+log for verifying artifact inclusion, consistency, and signatures using
+cryptographic proofs.
 
 It supports:
 - Extracting log indices from Rekor bundles.
@@ -10,7 +11,8 @@ It supports:
 - Verifying inclusion proofs and consistency proofs.
 - Validating artifact signatures against embedded certificates.
 
-Command-line usage is supported for debugging, inclusion checks, and consistency checks.
+Command-line usage is supported for debugging, inclusion checks, and
+consistency checks.
 """
 
 import argparse
@@ -19,15 +21,17 @@ import json
 import logging as log
 
 import requests
-from .util import extract_public_key, verify_artifact_signature
 
-from .merkle_proof import (
+from supply_chain_security_nyu.merkle_proof import (
     DefaultHasher,
+    compute_leaf_hash,
     verify_consistency,
     verify_inclusion,
-    compute_leaf_hash,
 )
-
+from supply_chain_security_nyu.util import (
+    extract_public_key,
+    verify_artifact_signature,
+)
 
 BUNDLE_FILE_PATH = "artifact.bundle"
 CHECKPOINT_FILE_PATH = "checkpoint.json"
@@ -43,7 +47,7 @@ def get_log_index_from_bundle():
     Raises:
         KeyError: If 'rekorBundle' or 'Payload' keys are missing in the bundle.
     """
-    with open(BUNDLE_FILE_PATH, "r", encoding="utf-8") as file:
+    with open(BUNDLE_FILE_PATH, encoding="utf-8") as file:
         dump = json.load(file)
         try:
             return dump["rekorBundle"]["Payload"]["logIndex"]
@@ -70,7 +74,8 @@ def get_log_entry(log_index):
         return None
     try:
         return requests.get(
-            f"https://rekor.sigstore.dev/api/v1/log/entries?logIndex={log_index}",
+            f"https://rekor.sigstore.dev/api/v1/log/entries?logIndex="
+            f"{log_index}",
             timeout=10,
         ).json()
     except requests.exceptions.RequestException as ex:
@@ -82,7 +87,8 @@ def inclusion(log_index, artifact_filepath, debug=False):
     """
     Verify artifact inclusion in the Rekor transparency log.
 
-    This function validates both the artifact signature and the inclusion proof.
+    This function validates both the artifact signature and the
+    inclusion proof.
 
     Args:
         log_index (int): The Rekor log index to verify.
@@ -166,8 +172,8 @@ def consistency(prev_checkpoint, debug=False):
     Verify the consistency between a previous checkpoint and the latest one.
 
     Args:
-        prev_checkpoint (dict): Dictionary containing previous checkpoint details
-            with keys 'treeID', 'treeSize', and 'rootHash'.
+        prev_checkpoint (dict): Dictionary containing previous checkpoint
+        details with keys 'treeID', 'treeSize', and 'rootHash'.
 
     Raises:
         Exception: If consistency verification fails.
@@ -182,13 +188,17 @@ def consistency(prev_checkpoint, debug=False):
 
     try:
         proof = requests.get(
-            f"https://rekor.sigstore.dev/api/v1/log/proof?firstSize={old_tree_size}"
+            f"https://rekor.sigstore.dev/api/v1/log/proof?firstSize="
+            f"{old_tree_size}"
             f"&lastSize={new_tree_size}&treeID={old_tree_id}",
             timeout=10,
         ).json()
         proof_hashes = list(proof.get("hashes", []))
         if debug:
-            print(f"Fetched {len(proof_hashes)} proof hashes for consistency check.")
+            print(
+                f"Fetched {len(proof_hashes)} proof hashes for consistency"
+                f" check."
+            )
     except requests.exceptions.RequestException as ex:
         log.error("Error retrieving proof: %s", ex)
         return
@@ -253,7 +263,10 @@ def main():
         "--tree-id", help="Tree ID for consistency proof", required=False
     )
     parser.add_argument(
-        "--tree-size", help="Tree size for consistency proof", required=False, type=int
+        "--tree-size",
+        help="Tree size for consistency proof",
+        required=False,
+        type=int,
     )
     parser.add_argument(
         "--root-hash", help="Root hash for consistency proof", required=False

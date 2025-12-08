@@ -1,42 +1,39 @@
-import sys
-from supply_chain_security_nyu.merkle_proof import DefaultHasher
-import json
 import base64
+import json
+import sys
 from unittest.mock import patch
+
 import pytest
-from supply_chain_security_nyu import util, main, merkle_proof
-
-from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import ec
 
-@patch('requests.get')
+from supply_chain_security_nyu import main, merkle_proof, util
+from supply_chain_security_nyu.merkle_proof import DefaultHasher
+
+
+@patch("requests.get")
 def test_get_log_entry_none_index(mock_get):
     """Test get_log_entry with None index."""
+    # pylint: disable=unused-argument
     result = main.get_log_entry(None)
     assert result is None
 
 
 def test_verify_inclusion_basic():
     """Test basic inclusion verification."""
-    leaf_info = {
-        "index": 0,
-        "size": 1,
-        "hash": "a" * 64
-    }
+    leaf_info = {"index": 0, "size": 1, "hash": "a" * 64}
     proof = []
     root = "a" * 64
 
     try:
         # This will fail but tests the function exists and accepts args
         merkle_proof.verify_inclusion(
-            merkle_proof.DefaultHasher,
-            leaf_info,
-            proof,
-            root
+            merkle_proof.DefaultHasher, leaf_info, proof, root
         )
-    except Exception:
+    except Exception:  # pylint: disable=broad-exception-caught
         # Function exists and was called
         pass
+
 
 # -------------------------
 # main.get_log_index_from_bundle
@@ -47,6 +44,7 @@ def test_get_log_index_from_bundle_missing(tmp_path, monkeypatch):
     p.write_text(json.dumps({"bogus": {}}))
     monkeypatch.chdir(tmp_path)
     assert main.get_log_index_from_bundle() is None
+
 
 # -------------------------
 # util.verify_artifact_signature happy & unhappy paths
@@ -67,13 +65,16 @@ def test_verify_artifact_signature_valid_and_invalid(tmp_path, capsys):
 
     # sign data correctly
     sig = priv.sign(data, ec.ECDSA(hashes.SHA256()))
-    # good signature -> verify_artifact_signature should not print "Signature is invalid"
+    # good signature -> verify_artifact_signature should not print
+    # "Signature is invalid"
     util.verify_artifact_signature(sig, pub_pem, str(file_path))
     out = capsys.readouterr().out
     assert "Signature is invalid" not in out
 
     # corrupt signature -> should print "Signature is invalid"
-    bad_sig = sig[:-1] + (b"\x00" if len(sig) > 0 else b"\x00")
+    bad_sig = bytearray(sig)
+    bad_sig[len(bad_sig) // 2] ^= 0xFF  # XOR to flip bits
+    bad_sig = bytes(bad_sig)
     util.verify_artifact_signature(bad_sig, pub_pem, str(file_path))
     out2 = capsys.readouterr().out
     assert "Signature is invalid" in out2
@@ -85,7 +86,9 @@ def make_valid_log_entry():
         "spec": {
             "signature": {
                 "content": base64.b64encode(b"dummy-signature").decode(),
-                "publicKey": {"content": base64.b64encode(b"dummy-cert").decode()},
+                "publicKey": {
+                    "content": base64.b64encode(b"dummy-cert").decode()
+                },
             }
         }
     }
@@ -106,11 +109,12 @@ def make_valid_log_entry():
     }
 
 
-@patch("main.get_log_entry")
-@patch("main.extract_public_key")
-@patch("main.verify_artifact_signature")
-@patch("main.compute_leaf_hash")
-@patch("main.verify_inclusion")
+# pylint: disable=too-many-arguments,too-many-positional-arguments
+@patch("supply_chain_security_nyu.main.get_log_entry")
+@patch("supply_chain_security_nyu.main.extract_public_key")
+@patch("supply_chain_security_nyu.main.verify_artifact_signature")
+@patch("supply_chain_security_nyu.main.compute_leaf_hash")
+@patch("supply_chain_security_nyu.main.verify_inclusion")
 def test_inclusion_and_consistency_integration(
     mock_verify_inclusion,
     mock_compute_leaf_hash,
@@ -151,10 +155,17 @@ def test_inclusion_and_consistency_integration(
     }
 
     # Mock dependencies
-    with patch("main.get_latest_checkpoint", return_value=latest_checkpoint), patch(
-        "requests.get"
-    ) as mock_get, patch("main.verify_consistency") as mock_vc:
-        mock_get.return_value.json.return_value = {"hashes": ["c" * 64, "d" * 64]}
+    with (
+        patch(
+            "supply_chain_security_nyu.main.get_latest_checkpoint",
+            return_value=latest_checkpoint,
+        ),
+        patch("requests.get") as mock_get,
+        patch("supply_chain_security_nyu.main.verify_consistency") as mock_vc,
+    ):
+        mock_get.return_value.json.return_value = {
+            "hashes": ["c" * 64, "d" * 64]
+        }
         main.consistency(prev_checkpoint, debug=True)
         out = capsys.readouterr().out
         # Expected debug output and success message
@@ -175,14 +186,18 @@ def run_main_with_args(args, capsys):
         main.main()
     return capsys.readouterr().out
 
-@patch("main.consistency")
+
+@patch("supply_chain_security_nyu.main.consistency")
 def test_main_consistency_success(mock_consistency, capsys):
     """Test consistency branch with all required args."""
     args = [
         "--consistency",
-        "--tree-id", "mytree",
-        "--tree-size", "42",
-        "--root-hash", "b"*64,
+        "--tree-id",
+        "mytree",
+        "--tree-size",
+        "42",
+        "--root-hash",
+        "b" * 64,
     ]
     output = run_main_with_args(args, capsys)
     mock_consistency.assert_called_once()
@@ -194,7 +209,7 @@ def test_main_consistency_success(mock_consistency, capsys):
 
 
 @pytest.mark.parametrize(
-    "missing_flag,expected_msg",
+    ("missing_flag", "expected_msg"),
     [
         ("--tree-id", "please specify tree id"),
         ("--tree-size", "please specify tree size"),
@@ -205,16 +220,20 @@ def test_main_consistency_missing_args(missing_flag, expected_msg, capsys):
     """Test missing argument messages in consistency branch."""
     base_args = [
         "--consistency",
-        "--tree-id", "T1",
-        "--tree-size", "10",
-        "--root-hash", "a"*64,
+        "--tree-id",
+        "T1",
+        "--tree-size",
+        "10",
+        "--root-hash",
+        "a" * 64,
     ]
     # remove one flag and its value
     idx = base_args.index(missing_flag)
-    del base_args[idx:idx+2]
+    del base_args[idx : idx + 2]
 
     output = run_main_with_args(base_args, capsys)
     assert expected_msg in output
+
 
 def test_verify_consistency_second_half():
     hasher = DefaultHasher
@@ -223,21 +242,44 @@ def test_verify_consistency_second_half():
     size2 = 5
 
     # Provide proof long enough for inner + border computation
-    # We'll mock decomp_incl_proof to inner=1, border=2, so total slice length = 3
-    proof = ["a"*64, "b"*64, "c"*64, "d"*64]  # one extra to account for slicing
+    # We'll mock decomp_incl_proof to inner=1, border=2, so
+    # total slice length = 3
+    proof = [
+        "a" * 64,
+        "b" * 64,
+        "c" * 64,
+        "d" * 64,
+    ]  # one extra to account for slicing
 
-    root1 = "d"*64
-    root2 = "e"*64
+    root1 = "d" * 64
+    root2 = "e" * 64
 
     # Patch dependent functions
-    with patch("merkle_proof.decomp_incl_proof", return_value=(1, 2)), \
-         patch("merkle_proof.chain_inner_right", return_value=b"X") as mock_inner_right, \
-         patch("merkle_proof.chain_inner", return_value=b"Y") as mock_inner, \
-         patch("merkle_proof.chain_border_right", side_effect=lambda h, s, p: s) as mock_border, \
-         patch("merkle_proof.verify_match") as mock_verify:
-
+    with (
+        patch(
+            "supply_chain_security_nyu.merkle_proof.decomp_incl_proof",
+            return_value=(1, 2),
+        ),
+        patch(
+            "supply_chain_security_nyu.merkle_proof.chain_inner_right",
+            return_value=b"X",
+        ) as mock_inner_right,
+        patch(
+            "supply_chain_security_nyu.merkle_proof.chain_inner",
+            return_value=b"Y",
+        ) as mock_inner,
+        patch(
+            "supply_chain_security_nyu.merkle_proof.chain_border_right",
+            side_effect=lambda h, s, p: s,
+        ) as mock_border,
+        patch(
+            "supply_chain_security_nyu.merkle_proof.verify_match"
+        ) as mock_verify,
+    ):
         # Call function — now proof length matches inner+border
-        merkle_proof.verify_consistency(hasher, (size1, size2), proof, (root1, root2))
+        merkle_proof.verify_consistency(
+            hasher, (size1, size2), proof, (root1, root2)
+        )
 
         # Check calls
         mock_inner_right.assert_called()

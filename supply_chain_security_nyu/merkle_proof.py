@@ -1,13 +1,13 @@
 """
 Merkle Tree Proof Verification Utilities
 
-This module implements cryptographic hash functions and proof verification logic
-for verifying inclusion and consistency proofs in transparency logs.
+This module implements cryptographic hash functions and proof verification
+logic for verifying inclusion and consistency proofs in transparency logs.
 """
 
-import hashlib
-import binascii
 import base64
+import binascii
+import hashlib
 
 # domain separation prefixes according to the RFC
 RFC6962_LEAF_HASH_PREFIX = 0
@@ -16,7 +16,8 @@ RFC6962_NODE_HASH_PREFIX = 1
 
 class Hasher:
     """
-    Provides RFC 6962-compatible hashing operations using a specified hash function.
+    Provides RFC 6962-compatible hashing operations using a specified
+    hash function.
 
     Attributes:
         hash_func (Callable): Hash function to use (e.g., hashlib.sha256).
@@ -96,7 +97,8 @@ def verify_consistency(hasher, sizes, proof, roots):
         hasher (Hasher): The hash function wrapper to use.
         sizes (tuple[int, int]): (size1, size2) of old and new trees.
         proof (list[str]): List of proof hashes in hexadecimal form.
-        roots (tuple[str, str]): Hex-encoded roots of the smaller and larger trees.
+        roots (tuple[str, str]): Hex-encoded roots of the smaller
+        and larger trees.
 
     Raises:
         ValueError: If proof is invalid or inputs are inconsistent.
@@ -116,7 +118,8 @@ def verify_consistency(hasher, sizes, proof, roots):
     if size1 == 0:
         if bytearray_proof:
             raise ValueError(
-                f"expected empty proof, but got {len(bytearray_proof)} components"
+                f"expected empty proof, but got {len(bytearray_proof)} "
+                f"components"
             )
         return
     if not bytearray_proof:
@@ -127,10 +130,14 @@ def verify_consistency(hasher, sizes, proof, roots):
     inner -= shift
 
     seed = root1 if size1 == 1 << shift else bytearray_proof[0]
-    proof_slice = bytearray_proof[1:] if size1 != 1 << shift else bytearray_proof
+    proof_slice = (
+        bytearray_proof[1:] if size1 != 1 << shift else bytearray_proof
+    )
 
     if len(proof_slice) != inner + border:
-        raise ValueError(f"wrong proof size {len(proof_slice)}, want {inner + border}")
+        raise ValueError(
+            f"wrong proof size {len(proof_slice)}, want {inner + border}"
+        )
 
     # compute masks
     mask = (size1 - 1) >> shift
@@ -188,7 +195,8 @@ def decomp_incl_proof(index, size):
 
 def inner_proof_size(index, size):
     """
-    Calculate the number of inner proof elements for a given leaf index and tree size.
+    Calculate the number of inner proof elements for a given leaf index and
+    tree size.
 
     Args:
         index (int): Leaf index.
@@ -308,12 +316,15 @@ def root_from_inclusion_proof(hasher, index, size, leaf_hash, proof):
 
     if len(leaf_hash) != hasher.size():
         raise ValueError(
-            f"leaf_hash has unexpected size {len(leaf_hash)}, want {hasher.size()}"
+            f"leaf_hash has unexpected size {len(leaf_hash)}, want "
+            f"{hasher.size()}"
         )
 
     inner, border = decomp_incl_proof(index, size)
     if len(proof) != inner + border:
-        raise ValueError(f"wrong proof size {len(proof)}, want {inner + border}")
+        raise ValueError(
+            f"wrong proof size {len(proof)}, want {inner + border}"
+        )
 
     res = chain_inner(hasher, leaf_hash, proof[:inner], index)
     res = chain_border_right(hasher, res, proof[inner:])

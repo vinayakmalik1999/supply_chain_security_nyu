@@ -24,6 +24,7 @@ flake8 = "^7.3.0"
 pytest = "8.4.2"
 pytest-cov = "^7.0.0"
 pytest-mock = "3.15.1"
+flake8-pyproject = "^1.2.4"
 
 [tool.poetry.scripts]
 python-rekor-monitor = "supply_chain_security_nyu.main:main"
@@ -31,3 +32,67 @@ python-rekor-monitor = "supply_chain_security_nyu.main:main"
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+line-length = 80
+target-version = "py39"
+exclude = [
+    ".git",
+    ".pytest_cache",
+    ".mypy_cache",
+    ".ruff_cache",
+    "__pycache__",
+    "dist",
+    "build",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "A", "C4", "PT"]
+ignore = []
+
+[tool.black]
+line-length = 80
+target-version = ["py39"]
+exclude = '''
+/(
+    \.git
+  | \.pytest_cache
+  | \.mypy_cache
+  | __pycache__
+  | dist
+  | build
+)/
+'''
+
+[tool.flake8]
+max-line-length = 80
+extend-ignore = ["E203"]
+exclude = [".git", "__pycache__", ".pytest_cache", ".mypy_cache", "dist", "build"]
+
+[tool.pylint.messages_control]
+max-line-length = 80
+disable = ["C0111", "C0103"]
+
+[tool.bandit]
+exclude_dirs = ["tests", ".pytest_cache", ".mypy_cache"]
+skips = ["B101"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+
+[tool.coverage.run]
+source = ["supply_chain_security_nyu"]
+omit = ["*/tests/*", "*/__pycache__/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+]

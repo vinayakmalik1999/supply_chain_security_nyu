@@ -109,9 +109,6 @@ jobs:
       - name: Run TruffleHog secret scanning
         uses: trufflesecurity/trufflehog@main
         with:
-          path: ./
-          base: ${{ github.event.before != '0000000000000000000000000000000000000000' && github.event.before || '' }}
-          head: HEAD
           extra_args: --only-verified --fail
   test:
     name: Testing and Coverage
